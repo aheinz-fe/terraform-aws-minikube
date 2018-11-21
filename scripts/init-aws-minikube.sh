@@ -39,7 +39,7 @@ EOF
 # setenforce returns non zero if already SE Linux is already disabled
 is_enforced=$(getenforce)
 if [[ $is_enforced != "Disabled" ]]; then
-  setenforce 0
+  setenforce -P 0
 fi
 
 yum install -y kubelet-$KUBERNETES_VERSION kubeadm-$KUBERNETES_VERSION kubernetes-cni
