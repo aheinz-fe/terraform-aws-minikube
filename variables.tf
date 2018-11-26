@@ -31,6 +31,11 @@ variable "ssh_public_key" {
   default     = "~/.ssh/id_rsa.pub"
 }
 
+variable "create_eip" {
+  description = "If set to true, create an EIP for the microservice"
+  default     = true
+}
+
 variable "hosted_zone" {
   description = "Hosted zone to be used for the alias"
 }

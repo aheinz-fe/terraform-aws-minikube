@@ -109,7 +109,8 @@ data "template_file" "init_minikube" {
   vars {
     kubeadm_token = "${module.kubeadm-token.token}"
     dns_name      = "${var.cluster_name}.${var.hosted_zone}"
-    ip_address    = "${aws_eip.minikube.public_ip}"
+    # ip_address    = "${var.create_eip ? aws_eip.minikube.0.public_ip : "0.0.0.0"}"
+    ip_address    = "0.0.0.0"
     cluster_name  = "${var.cluster_name}"
     addons        = "${join(" ", var.addons)}"
   }
@@ -174,6 +175,7 @@ data "aws_ami" "centos7" {
 }
 
 resource "aws_eip" "minikube" {
+  count = "${var.create_eip}"
   vpc = true
 }
 
@@ -187,7 +189,7 @@ resource "aws_instance" "minikube" {
 
   subnet_id = "${var.aws_subnet_id}"
 
-  associate_public_ip_address = false
+  associate_public_ip_address = "${!var.create_eip}"
 
   vpc_security_group_ids = [
     "${aws_security_group.minikube.id}",
@@ -215,8 +217,9 @@ resource "aws_instance" "minikube" {
 }
 
 resource "aws_eip_association" "minikube_assoc" {
+  count = "${var.create_eip}"
   instance_id   = "${aws_instance.minikube.id}"
-  allocation_id = "${aws_eip.minikube.id}"
+  allocation_id = "${aws_eip.minikube.0.id}"
 }
 
 #####
@@ -232,6 +235,7 @@ resource "aws_route53_record" "minikube" {
   zone_id = "${data.aws_route53_zone.dns_zone.zone_id}"
   name    = "${var.cluster_name}.${var.hosted_zone}"
   type    = "A"
-  records = ["${aws_eip.minikube.public_ip}"]
+  # records = ["${var.create_eip ? aws_eip.minikube.0.public_ip : aws_instance.minikube.public_ip}"]
+  records = ["${aws_instance.minikube.public_ip}"]
   ttl     = 300
 }
